@@ -6,8 +6,10 @@ class BreedRemoteDataSource {
 
   BreedRemoteDataSource({required this.apiClient});
 
-  Future<List<BreedModel>> fetchBreeds() async {
-    final response = await apiClient.get('/breeds');
+  Future<List<BreedModel>> fetchBreeds(
+      int limit, int page, String search) async {
+    final response = await apiClient.get(
+        '/breeds${search == '' ? '?limit=$limit&page=$page' : '/search?q=$search'}');
     return (response as List).map((json) => BreedModel.fromJson(json)).toList();
   }
 }

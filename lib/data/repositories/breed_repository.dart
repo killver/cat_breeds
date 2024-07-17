@@ -7,9 +7,9 @@ class BreedRepository {
 
   BreedRepository({required this.remoteDataSource});
 
-  Future<List<BreedModel>> getBreeds() async {
+  Future<List<BreedModel>> getBreeds(int limit, int page, String search) async {
     try {
-      final breeds = await remoteDataSource.fetchBreeds();
+      final breeds = await remoteDataSource.fetchBreeds(limit, page, search);
       return breeds;
     } on ServerException {
       throw ServerException();

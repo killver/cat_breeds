@@ -32,11 +32,11 @@ class MyApp extends StatelessWidget {
           title: 'Cat Breeds App',
           theme: ThemeData(
             scaffoldBackgroundColor: const Color(0xFF282828),
-            appBarTheme: AppBarTheme(backgroundColor: Color(0xFF64C4A9)),
+            appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF64C4A9)),
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-          home: SplashPage(),
+          home: const SplashPage(),
         ));
   }
 }

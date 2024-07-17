@@ -14,9 +14,9 @@ class DetailPage extends StatelessWidget {
         body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Flexible(
             flex: 1,
-            child: breed.imageUrl.isNotEmpty
+            child: breed.imageUrl != null
                 ? Image.network(
-                    breed.imageUrl,
+                    breed.imageUrl!,
                     fit: BoxFit.cover,
                   )
                 : const Placeholder(

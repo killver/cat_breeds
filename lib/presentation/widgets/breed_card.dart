@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pets_breeds/data/models/breed_model.dart';
 import 'package:pets_breeds/presentation/pages/detail_page.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class BreedCard extends StatelessWidget {
   final BreedModel breed;
@@ -43,8 +44,24 @@ class BreedCard extends StatelessWidget {
                     ),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(15),
-                      child: breed.imageUrl.isNotEmpty
-                          ? Image.network(breed.imageUrl)
+                      child: breed.imageUrl != null
+                          ? FutureBuilder(
+                              future: DefaultCacheManager()
+                                  .getSingleFile(breed.imageUrl!),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.done) {
+                                  if (snapshot.hasData) {
+                                    return Image.file(snapshot.data!);
+                                  } else {
+                                    return const Placeholder(
+                                      fallbackHeight: 200,
+                                    );
+                                  }
+                                } else {
+                                  return const CircularProgressIndicator();
+                                }
+                              })
                           : const Placeholder(
                               fallbackHeight: 200,
                             ),

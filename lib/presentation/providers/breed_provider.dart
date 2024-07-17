@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:pets_breeds/data/models/breed_model.dart';
 import 'package:pets_breeds/data/repositories/breed_repository.dart';
 
@@ -8,35 +9,43 @@ class BreedProvider with ChangeNotifier {
   BreedProvider({required this.repository});
 
   List<BreedModel> _breeds = [];
-  List<BreedModel> _filteredBreeds = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
+  bool _isFetchingMore = false;
+  int _page = 0;
+  int _limit = 10;
 
   List<BreedModel> get breeds => _breeds;
 
-  List<BreedModel> get filteredBreeds => _filteredBreeds;
-
   bool get isLoading => _isLoading;
 
-  Future<void> fetchBreeds() async {
+  bool get isFetchingMore => _isFetchingMore;
+
+  Future<void> fetchBreeds({String search = ''}) async {
     _isLoading = true;
     notifyListeners();
-    _breeds = await repository.getBreeds();
-    _filteredBreeds = _breeds;
+
+    _breeds = await repository.getBreeds(_limit, _page, search);
     _isLoading = false;
-    notifyListeners();
+
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
-  void filterBreedsByName(String name) {
-    _isLoading = true;
-    if (name.isEmpty) {
-      _filteredBreeds = _breeds;
-    } else {
-      _filteredBreeds = _breeds
-          .where((breed) =>
-              RegExp(name.toLowerCase()).hasMatch(breed.name.toLowerCase()))
-          .toList();
-    }
-    _isLoading = false;
+  Future<void> fetchMoreBreeds({String search = ''}) async {
+    if (_isFetchingMore) return;
+
+    _isFetchingMore = true;
+    _page++;
     notifyListeners();
+
+    final moreBreeds = await repository.getBreeds(_limit, _page, search);
+    _breeds.addAll(moreBreeds);
+
+    _isFetchingMore = false;
+
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }

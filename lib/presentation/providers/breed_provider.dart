@@ -20,32 +20,38 @@ class BreedProvider with ChangeNotifier {
 
   bool get isFetchingMore => _isFetchingMore;
 
-  Future<void> fetchBreeds({String search = ''}) async {
+  Future<void> fetchBreeds(String from, {String search = ''}) async {
+    if (_isLoading) return;
+
     _isLoading = true;
     notifyListeners();
 
-    _breeds = await repository.getBreeds(_limit, _page, search);
-    _isLoading = false;
-
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    try {
+      _page = 0;
+      _breeds = await repository.getBreeds(_limit, _page, search);
+    } catch (e) {
+      print("Error: $e");
+    } finally {
+      _isLoading = false;
       notifyListeners();
-    });
+    }
   }
 
-  Future<void> fetchMoreBreeds({String search = ''}) async {
-    if (_isFetchingMore) return;
+  Future<void> fetchMoreBreeds(String from, {String search = ''}) async {
+    if (_isFetchingMore || _isLoading) return;
 
     _isFetchingMore = true;
     _page++;
     notifyListeners();
 
-    final moreBreeds = await repository.getBreeds(_limit, _page, search);
-    _breeds.addAll(moreBreeds);
-
-    _isFetchingMore = false;
-
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    try {
+      final moreBreeds = await repository.getBreeds(_limit, _page, search);
+      _breeds.addAll(moreBreeds);
+    } catch (e) {
+      print("Error: $e");
+    } finally {
+      _isFetchingMore = false;
       notifyListeners();
-    });
+    }
   }
 }

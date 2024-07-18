@@ -18,46 +18,45 @@ class _LandingPageState extends State<LandingPage> {
   ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
 
-  bool activeTimer = false;
-  int startTime = 300;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<BreedProvider>(context, listen: false);
-      provider.fetchBreeds();
+      provider.fetchBreeds('init');
     });
-    _scrollController.addListener(() {
-      final provider = Provider.of<BreedProvider>(context, listen: false);
-      if (_scrollController.position.pixels ==
-              _scrollController.position.maxScrollExtent &&
-          !provider.isFetchingMore) {
-        provider.fetchMoreBreeds(search: _searchQuery);
-      }
-    });
+    _scrollController.addListener(_scrollListener);
   }
 
-  void starTimerSearch() {
-    const oneDecimal = Duration(milliseconds: 100);
-    Timer.periodic(
-        oneDecimal,
-        (Timer timer) => setState(() {
-              if (startTime < 100) {
-                timer.cancel();
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchBreed.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-                Provider.of<BreedProvider>(context, listen: false)
-                    .fetchBreeds(search: _searchQuery);
-                setState(() {
-                  startTime = 300;
-                  activeTimer = false;
-                });
-              } else {
-                startTime = startTime - 100;
-              }
-            }));
-    setState(() {
-      activeTimer = true;
+  void _scrollListener() {
+    final provider = Provider.of<BreedProvider>(context, listen: false);
+    if (_scrollController.position.pixels ==
+            _scrollController.position.maxScrollExtent &&
+        !provider.isFetchingMore) {
+      provider.fetchMoreBreeds('scroll', search: _searchQuery);
+    }
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      final provider = Provider.of<BreedProvider>(context, listen: false);
+      if (_searchQuery.isEmpty && provider.breeds.length >= 10) {
+        _scrollController.addListener(_scrollListener);
+      } else {
+        _scrollController.removeListener(_scrollListener);
+      }
+      provider.fetchBreeds('Search timer', search: _searchQuery);
     });
   }
 
@@ -77,27 +76,39 @@ class _LandingPageState extends State<LandingPage> {
                     filled: true,
                     fillColor: Colors.white,
                     hintText: 'Search breed',
-                    suffix: const Icon(Icons.search),
+                    suffix: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _searchBreed.clear();
+                                _searchQuery = '';
+                                _scrollController.addListener(_scrollListener);
+                              });
+                              Provider.of<BreedProvider>(context, listen: false)
+                                  .fetchBreeds('clear btn');
+                            },
+                          )
+                        : const Icon(Icons.search),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(5))),
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
                   });
-                  if (!activeTimer) {
-                    starTimerSearch();
-                  } else {
-                    setState(() {
-                      startTime = 300;
-                    });
-                  }
+                  _onSearchChanged();
                 },
               ),
             ),
             Expanded(
               child:
                   Consumer<BreedProvider>(builder: (context, provider, child) {
-                if (provider.isLoading && provider.breeds.isEmpty) {
+                if (provider.isLoading ||
+                    (!provider.isLoading &&
+                        _searchQuery.isNotEmpty &&
+                        _debounce?.isActive != null &&
+                        _debounce?.isActive == true)) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
@@ -105,7 +116,10 @@ class _LandingPageState extends State<LandingPage> {
 
                 if (provider.breeds.isEmpty) {
                   return const Center(
-                    child: Text('No breeds found.'),
+                    child: Text(
+                      'No breeds found.',
+                      style: TextStyle(fontSize: 30, color: Colors.white),
+                    ),
                   );
                 }
 

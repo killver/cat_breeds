@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
                 repository: BreedRepository(
                     remoteDataSource: BreedRemoteDataSource(
                         apiClient: ApiClient(client: http.Client()))))
-              ..fetchBreeds(),
+              ..fetchBreeds('main'),
           )
         ],
         child: MaterialApp(

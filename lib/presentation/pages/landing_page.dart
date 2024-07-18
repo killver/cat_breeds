@@ -73,6 +73,8 @@ class _LandingPageState extends State<LandingPage> {
               child: TextField(
                 controller: _searchBreed,
                 decoration: InputDecoration(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                     filled: true,
                     fillColor: Colors.white,
                     hintText: 'Search breed',

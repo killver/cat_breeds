@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:pets_breeds/data/models/breed_model.dart';
 import 'package:pets_breeds/data/repositories/breed_repository.dart';
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:pets_breeds/data/models/breed_model.dart';
 
 class DetailPage extends StatelessWidget {
@@ -15,10 +16,25 @@ class DetailPage extends StatelessWidget {
           Flexible(
             flex: 1,
             child: breed.imageUrl != null
-                ? Image.network(
-                    breed.imageUrl!,
-                    fit: BoxFit.cover,
-                  )
+                ? FutureBuilder(
+                    future:
+                        DefaultCacheManager().getSingleFile(breed.imageUrl!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        if (snapshot.hasData) {
+                          return Image.file(
+                            snapshot.data!,
+                            fit: BoxFit.cover,
+                          );
+                        } else {
+                          return const Placeholder(
+                            fallbackHeight: 200,
+                          );
+                        }
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
+                    })
                 : const Placeholder(
                     fallbackHeight: 200,
                   ),
